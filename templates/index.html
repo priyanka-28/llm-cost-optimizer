@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Observatory - Analyze Your LLM Costs</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .tagline {
+            font-size: 22px;
+            opacity: 0.95;
+            margin-bottom: 15px;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.85;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+
+        .upload-zone:hover {
+            background: #f3f4f6;
+            border-color: #764ba2;
+        }
+
+        .upload-zone.dragover {
+            background: #ede9fe;
+            border-color: #7c3aed;
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 20px;
+            color: #111827;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            margin-left: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .label {
+            color: #6b7280;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .subtext {
+            font-size: 14px;
+            color: #10b981;
+        }
+
+        .stat-card.savings {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .stat-card.savings .label,
+        .stat-card.savings .value,
+        .stat-card.savings .subtext {
+            color: white;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #111827;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .opportunity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .opportunity-item {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #10b981;
+        }
+
+        .opportunity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .opportunity-title {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .opportunity-savings {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .opportunity-details {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .outlier-item {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .badge.simple {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.complex {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .example-link {
+            color: white;
+            text-decoration: underline;
+            cursor: pointer;
+            opacity: 0.9;
+        }
+
+        .example-link:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔭 LLM Observatory</h1>
+            <div class="tagline">Analyze Your LLM Costs in 30 Seconds</div>
+            <div class="subtitle">Upload your Anthropic or OpenAI usage CSV and discover how much you could save</div>
+            <div style="margin-top: 15px;">
+                <a href="#" class="example-link" onclick="loadExample(); return false;">
+                    Or try with example data →
+                </a>
+            </div>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📊</div>
+                <div class="upload-text">Drop your CSV file here or click to browse</div>
+                <div class="upload-hint">Supports Anthropic and OpenAI usage exports (Max 16MB)</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(event)">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Analyzing your LLM usage...</div>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="stats-grid">
+                <div class="stat-card savings">
+                    <div class="label">Potential Monthly Savings</div>
+                    <div class="value" id="potentialSavings">$0</div>
+                    <div class="subtext" id="savingsPercentage">0% reduction possible</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Calls Analyzed</div>
+                    <div class="value" id="totalCalls">0</div>
+                    <div class="subtext">API requests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Current Total Cost</div>
+                    <div class="value" id="totalCost">$0</div>
+                    <div class="subtext" id="avgCost">$0 per call</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Tokens</div>
+                    <div class="value" id="totalTokens">0</div>
+                    <div class="subtext" id="tokenBreakdown">Input + Output</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="panel">
+                    <h2>💰 Cost by Model</h2>
+                    <div class="chart-container">
+                        <canvas id="modelCostChart"></canvas>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>📊 Task Complexity</h2>
+                    <div class="chart-container">
+                        <canvas id="complexityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>💡 Top Optimization Opportunities</h2>
+                <div class="opportunity-list" id="opportunityList">
+                    <!-- Filled by JavaScript -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>⚠️ Most Expensive Calls (Outliers)</h2>
+                <div class="opportunity-list" id="outlierList">
+                    <!-- Filled by JavaScript -->
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="resetUpload()">Analyze Another File</button>
+                <button class="btn btn-secondary" onclick="window.print()">Save as PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modelCostChart, complexityChart;
+
+        // Drag and drop handling
+        const uploadZone = document.getElementById('uploadZone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.remove('dragover');
+            }, false);
+        });
+
+        uploadZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please upload a CSV file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            document.getElementById('loading').classList.add('show');
+            uploadZone.style.display = 'none';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    resetUpload();
+                } else {
+                    displayResults(data);
+                }
+            })
+            .catch(error => {
+                alert('Error analyzing file: ' + error);
+                resetUpload();
+            });
+        }
+
+        function loadExample() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('uploadSection').style.display = 'none';
+
+            fetch('/example')
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                });
+        }
+
+        function displayResults(data) {
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('results').classList.add('show');
+
+            const summary = data.summary;
+
+            // Update summary stats
+            document.getElementById('potentialSavings').textContent = '$' + summary.potential_monthly_savings.toFixed(2);
+            document.getElementById('savingsPercentage').textContent = summary.savings_percentage + '% reduction possible';
+            document.getElementById('totalCalls').textContent = summary.total_calls.toLocaleString();
+            document.getElementById('totalCost').textContent = '$' + summary.total_cost.toFixed(2);
+            document.getElementById('avgCost').textContent = '$' + summary.average_cost_per_call.toFixed(4) + ' per call';
+            
+            const totalTokens = summary.total_input_tokens + summary.total_output_tokens;
+            document.getElementById('totalTokens').textContent = totalTokens.toLocaleString();
+            document.getElementById('tokenBreakdown').textContent = 
+                summary.total_input_tokens.toLocaleString() + ' in + ' + 
+                summary.total_output_tokens.toLocaleString() + ' out';
+
+            // Model cost chart
+            if (modelCostChart) modelCostChart.destroy();
+            const modelCtx = document.getElementById('modelCostChart').getContext('2d');
+            modelCostChart = new Chart(modelCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.model_costs),
+                    datasets: [{
+                        data: Object.values(data.model_costs),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f59e0b',
+                            '#10b981',
+                            '#ef4444',
+                            '#8b5cf6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Complexity chart
+            if (complexityChart) complexityChart.destroy();
+            const complexityCtx = document.getElementById('complexityChart').getContext('2d');
+            complexityChart = new Chart(complexityCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.complexity_breakdown),
+                    datasets: [{
+                        label: 'Number of Calls',
+                        data: Object.values(data.complexity_breakdown),
+                        backgroundColor: [
+                            '#dbeafe',
+                            '#fef3c7',
+                            '#fee2e2'
+                        ],
+                        borderColor: [
+                            '#1e40af',
+                            '#92400e',
+                            '#991b1b'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Optimization opportunities
+            const oppList = document.getElementById('opportunityList');
+            oppList.innerHTML = '';
+            
+            if (data.optimization_opportunities && data.optimization_opportunities.length > 0) {
+                data.optimization_opportunities.slice(0, 10).forEach((opp, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'opportunity-item';
+                    item.innerHTML = `
+                        <div class="opportunity-header">
+                            <div class="opportunity-title">
+                                #${idx + 1}: ${opp.current_model} → ${opp.recommended_model}
+                                <span class="badge ${opp.complexity}">${opp.complexity}</span>
+                            </div>
+                            <div class="opportunity-savings">Save $${opp.savings.toFixed(4)}</div>
+                        </div>
+                        <div class="opportunity-details">
+                            ${opp.input_tokens.toLocaleString()} input + ${opp.output_tokens.toLocaleString()} output tokens
+                            | Current: $${opp.current_cost.toFixed(4)} → Optimal: $${opp.optimal_cost.toFixed(4)}
+                            | ${((opp.savings / opp.current_cost) * 100).toFixed(1)}% savings
+                        </div>
+                    `;
+                    oppList.appendChild(item);
+                });
+            } else {
+                oppList.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No optimization opportunities found. You\'re already using optimal models!</div>';
+            }
+
+            // Outliers
+            const outlierList = document.getElementById('outlierList');
+            outlierList.innerHTML = '';
+            
+            if (data.outliers && data.outliers.length > 0) {
+                data.outliers.forEach((outlier, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'opportunity-item outlier-item';
+                    item.innerHTML = `
+                        <div class="opportunity-header">
+                            <div class="opportunity-title">
+                                Call #${idx + 1}: ${outlier.model}
+                            </div>
+                            <div class="opportunity-savings" style="color: #f59e0b;">$${outlier.cost.toFixed(4)}</div>
+                        </div>
+                        <div class="opportunity-details">
+                            ${outlier.input_tokens.toLocaleString()} input + ${outlier.output_tokens.toLocaleString()} output tokens
+                            | Timestamp: ${outlier.timestamp}
+                        </div>
+                    `;
+                    outlierList.appendChild(item);
+                });
+            }
+        }
+
+        function resetUpload() {
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('uploadZone').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+        }
+    </script>
+</body>
+</html>
