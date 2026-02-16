@@ -1,0 +1,8 @@
+[project]
+name = "llm-cost-optimizer"
+version = "0.1.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "Flask>=3.0,<4",
+  "pandas>=2.2.3,<3",
+]
