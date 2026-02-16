@@ -13,6 +13,27 @@
 
 ```bash
 # 1. Install Python (if needed)
+brew install python # macOS
+# or: sudo apt install python3 python3-pip python3-venv # Linux
+# or: Download from https://www.python.org/downloads/ #Windows
+
+# 2. Clone and navigate
+git clone https://github.com/priyanka-28/llm-cost-optimizer.git
+cd llm-cost-optimizer
+
+# 3. Run the automated setup
+chmod +x quickstart.sh
+./quickstart.sh
+
+# 4. Start the app
+python app.py
+
+```
+
+OR
+
+```bash
+# 1. Install Python (if needed)
 brew install python@3.12  # macOS
 # or: sudo apt install python3 python3-pip  # Linux
 
