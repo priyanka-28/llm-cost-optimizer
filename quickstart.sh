@@ -1,25 +1,28 @@
 #!/bin/bash
+set -e
 
 echo "╔══════════════════════════════════════════════════════════╗"
 echo "║            LLM OBSERVATORY - QUICK START                ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 
-# Check Python version
+# Choose python executable
 echo "Step 1: Checking Python installation..."
+PYTHON=python3
 if command -v python3 &> /dev/null; then
     python_version=$(python3 --version 2>&1 | awk '{print $2}')
-    echo "✓ Python $python_version found"
+    echo "✓ Python $python_version found (python3)"
 elif command -v python &> /dev/null; then
+    PYTHON=python
     python_version=$(python --version 2>&1 | awk '{print $2}')
-    echo "✓ Python $python_version found"
+    echo "✓ Python $python_version found (python)"
 else
     echo "✗ Python not found!"
     echo ""
-    echo "Please install Python 3.8 or higher:"
-    echo "  macOS:        brew install python@3.12"
+    echo "Please install Python 3.10+:"
+    echo "  macOS:         brew install python"
     echo "  Ubuntu/Debian: sudo apt install python3 python3-pip python3-venv"
-    echo "  Windows:      Download from https://www.python.org/downloads/"
+    echo "  Windows:       Download from https://www.python.org/downloads/"
     exit 1
 fi
 echo ""
@@ -29,13 +32,8 @@ echo "Step 2: Creating virtual environment..."
 if [ -d "venv" ]; then
     echo "✓ Virtual environment already exists"
 else
-    python3 -m venv venv
-    if [ $? -eq 0 ]; then
-        echo "✓ Virtual environment created"
-    else
-        echo "✗ Failed to create virtual environment"
-        exit 1
-    fi
+    $PYTHON -m venv venv
+    echo "✓ Virtual environment created"
 fi
 echo ""
 
@@ -54,12 +52,7 @@ echo ""
 # Install dependencies
 echo "Step 5: Installing dependencies..."
 pip install -r requirements.txt -q
-if [ $? -eq 0 ]; then
-    echo "✓ Dependencies installed"
-else
-    echo "✗ Failed to install dependencies"
-    exit 1
-fi
+echo "✓ Dependencies installed"
 echo ""
 
 echo "╔══════════════════════════════════════════════════════════╗"
@@ -73,10 +66,7 @@ echo "   python app.py"
 echo ""
 echo "2. Open in browser:"
 echo "   http://localhost:8000"
-echo ""
-echo "3. Upload your CSV:"
-echo "   • AWS Bedrock: example-bedrock-cloudwatch.csv"
-echo "   • Anthropic: example-anthropic-usage.csv"
+echo "   (If localhost fails, try http://127.0.0.1:8000)"
 echo ""
 echo "Happy analyzing! 🔭"
 echo ""
