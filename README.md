@@ -30,29 +30,6 @@ python app.py
 
 ```
 
-OR
-
-```bash
-# 1. Install Python (if needed)
-brew install python@3.12  # macOS
-# or: sudo apt install python3 python3-pip  # Linux
-
-# 2. Clone and navigate
-git clone https://github.com/priyanka-28/llm-cost-optimizer.git
-cd llm-cost-optimizer
-
-# 3. Setup virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# 4. Install dependencies
-python -m pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-
-# 5. Run
-python app.py
-```
-
 **Open:** http://localhost:8000
 
 **Upload your CSV and see your insights!** 🎉
@@ -123,18 +100,28 @@ Potential monthly cost: $68.25
 
 [**🌐 Open LLM Cost Optimizer →**](#) *(Coming soon!)*
 
-### Option 2: Run Locally (3 Commands)
+### Option 2: Run Locally (5 Commands)
+
+OR
 
 ```bash
-# 1. Download and extract the files
+# 1. Install Python (if needed)
+brew install python@3.12  # macOS
+# or: sudo apt install python3 python3-pip  # Linux
+
+# 2. Clone and navigate
 git clone https://github.com/priyanka-28/llm-cost-optimizer.git
 cd llm-cost-optimizer
 
-# 2. Run the setup script (does everything automatically)
-chmod +x quickstart.sh
-./quickstart.sh
+# 3. Setup virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# 3. Start the app
+# 4. Install dependencies
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# 5. Run
 python app.py
 ```
 
