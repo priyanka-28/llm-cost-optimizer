@@ -32,7 +32,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-**Open:** http://localhost:5000
+**Open:** http://localhost:8000
 
 **Upload your CSV and see your insights!** 🎉
 
@@ -117,7 +117,7 @@ chmod +x quickstart.sh
 python app.py
 ```
 
-**That's it!** Open http://localhost:5000 in your browser.
+**That's it!** Open http://localhost:8000 in your browser.
 
 ---
 

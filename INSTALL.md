@@ -8,7 +8,7 @@ chmod +x quickstart.sh
 python app.py
 ```
 
-Open: http://localhost:5000
+Open: http://localhost:8000
 
 **Done!** 🎉
 
@@ -73,12 +73,12 @@ python app.py
 
 You should see:
 ```
-* Running on http://127.0.0.1:5000
+* Running on http://127.0.0.1:8000
 ```
 
 ### 7. Open in Browser
 
-Go to: http://localhost:5000
+Go to: http://localhost:8000
 
 ---
 
@@ -118,13 +118,13 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Issue: Port 5000 already in use
+### Issue: Port 8000 already in use
 
 **Solution:**
 Edit `app.py` and change the port:
 ```python
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)  # Changed from 5000
+    app.run(debug=True, port=5001)  # Changed from 8000
 ```
 
 ---
@@ -175,7 +175,7 @@ pip install Flask==3.0.0 pandas==2.1.4
 python app.py
 
 # 7. Open browser
-# http://localhost:5000
+# http://localhost:8000
 ```
 
 ---
@@ -197,7 +197,7 @@ python app.py
 
 ### Upload Test
 
-1. Open http://localhost:5000
+1. Open http://localhost:8000
 2. Click the upload zone
 3. Select `example-anthropic-usage.csv`
 4. Should see dashboard with data
