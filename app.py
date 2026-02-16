@@ -381,5 +381,5 @@ def get_example_data():
     }
     return jsonify(example_data)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+if __name__ == "__main__":
+    app.run(host="localhost", port=8000, debug=True)
